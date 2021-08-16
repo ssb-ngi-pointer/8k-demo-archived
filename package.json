@@ -1,5 +1,5 @@
 {
-  "name": "ssb-browser-example",
+  "name": "8k-demo",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arj03/ssb-browser-example.git"
+    "url": "git+https://github.com/ssb-ngi-pointer/8k-demo.git"
   },
   "author": "arj",
   "license": "Beerware",
   "dependencies": {
-    "ssb-browser-core": "^11.1.0"
+    "ssb-browser-core": "github:arj03/ssb-browser-core#validate2-box2"
   },
   "devDependencies": {
     "browserify": "^17.0.0"
