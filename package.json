@@ -13,7 +13,8 @@
   "author": "arj",
   "license": "Beerware",
   "dependencies": {
-    "ssb-browser-core": "github:arj03/ssb-browser-core#validate2-box2"
+    "ssb-browser-core": "github:arj03/ssb-browser-core#validate2-box2",
+    "ssb-meta-feeds": "^0.15.0"
   },
   "devDependencies": {
     "browserify": "^17.0.0"
