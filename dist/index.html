@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html>
-  <title>SSB browser example</title>
+  <title>8K demo</title>
   <body>
-    Please check console
+    <div id="apps">
+      <b>Apps</b>
+      <li v-for="app in apps" v-on:click="useApp(app)">
+        {{ app.Title }}
+      </li>
+    </div>
+    <div id="main">
+    </div>
   </body>
+  <script src="vue.min.js"></script>
   <script src="index.js"></script>
 </html>

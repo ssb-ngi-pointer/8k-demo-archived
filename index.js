@@ -1,14 +1,32 @@
 const ssbSingleton = require('ssb-browser-core/ssb-singleton')
 
+const app = new Vue({
+  el: '#apps',
+
+  data: function() {
+    return {
+      apps: [
+        { Title: 'chat' }
+      ]
+    }
+  },
+
+  methods: {
+    useApp: function(app) {
+      const chat = require('./chat')()
+      new Vue(chat)
+      // FIXME: load source from db using msgId
+    },
+  }
+})
+
 function ssbReady(sbot) {
   console.log("got sbot", sbot)
-  sbot.net.metafeeds.create((err, metafeed) => {
-    console.log("I have a meta feed", metafeed)
-  })
 }
 
 function extraModules(secretStack) {
-  return secretStack.use(require("ssb-meta-feeds"))
+  return secretStack
+    .use(require("ssb-meta-feeds"))
 }
 
 // in case you want to add or overwrite something from here

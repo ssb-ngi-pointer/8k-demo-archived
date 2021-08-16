@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify index.js -o dist/index.js"
+    "build": "browserify index.js -o dist/index.js && cp node_modules/vue/dist/vue.min.js dist/"
   },
   "repository": {
     "type": "git",
@@ -14,7 +14,8 @@
   "license": "Beerware",
   "dependencies": {
     "ssb-browser-core": "github:arj03/ssb-browser-core#validate2-box2",
-    "ssb-meta-feeds": "^0.15.0"
+    "ssb-meta-feeds": "^0.15.0",
+    "vue": "^2.6.14"
   },
   "devDependencies": {
     "browserify": "^17.0.0"
