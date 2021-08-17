@@ -6,6 +6,7 @@ const app = new Vue({
 
   data: function() {
     return {
+      id: '',
       apps: [
         { Title: 'chat' }
       ],
@@ -22,8 +23,24 @@ const app = new Vue({
   }
 })
 
-function ssbReady(sbot) {
-  console.log("got sbot", sbot)
+function dumpDB() {
+  const { toPullStream } = SSB.dbOperators
+
+  pull(
+    SSB.db.query(
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      console.log(`author ${msg.value.author}, seq: ${msg.value.sequence}`)
+      // , content: ${JSON.stringify(msg.value.content, null, 2)}
+    })
+  )
+}
+
+function ssbReady(SSB) {
+  console.log("got sbot", SSB)
+
+  app.id = SSB.net.id
 
   SSB.net.connectAndRemember('wss:between-two-worlds.dk:9999~shs:7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=', {
     key: '@7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=.ed25519',
@@ -37,6 +54,8 @@ function ssbReady(sbot) {
         console.warn("Connection error: ", ev)
     })
   )
+
+  // promiscous mode, we connect to all and replicate all
 
   pull(
     SSB.net.conn.stagedPeers(),
@@ -62,6 +81,12 @@ function ssbReady(sbot) {
       app.peers = entries.filter(([, x]) => !!x.key).map(([address, data]) => ({ address, data }))
     })
   )
+
+  SSB.net.on('rpc:connect', function (rpc, isClient) {
+    SSB.net.ebt.request(rpc.id, true)
+  })
+
+  // find all meta feeds and replicate those
 }
 
 function extraModules(secretStack) {
@@ -81,7 +106,10 @@ let config = {
   },
   conn: {
     populatePubs: false
-  }  
+  },
+  ebt: {
+    logging: false
+  }
 }
 
 // setup ssb browser core

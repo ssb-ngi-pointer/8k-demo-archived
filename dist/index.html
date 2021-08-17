@@ -3,10 +3,15 @@
   <title>8K demo</title>
   <body>
     <div id="apps">
+      <b>Your ID</b>
+      <div>
+        {{ id.substring(0, 12) }}
+      </div>
+
       <b>Apps</b>
-      <li v-for="app in apps" v-on:click="useApp(app)">
+      <div v-for="app in apps" v-on:click="useApp(app)">
         {{ app.Title }}
-      </li>
+      </div>
 
       <b>Peers</b>
       <div v-for="peer in peers">
