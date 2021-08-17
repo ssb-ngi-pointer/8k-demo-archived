@@ -40,6 +40,8 @@ function dumpDB() {
 function ssbReady(SSB) {
   console.log("got sbot", SSB)
 
+  //dumpDB()
+
   app.id = SSB.net.id
 
   SSB.net.connectAndRemember('wss:between-two-worlds.dk:9999~shs:7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=', {
@@ -82,11 +84,42 @@ function ssbReady(SSB) {
     })
   )
 
+  // must ack self
+  SSB.net.ebt.request(SSB.net.id, true)
+
   SSB.net.on('rpc:connect', function (rpc, isClient) {
     SSB.net.ebt.request(rpc.id, true)
   })
 
+  const { where, type, slowEqual, live, toPullStream } = SSB.dbOperators
+
   // find all meta feeds and replicate those
+
+  pull(
+    SSB.db.query(
+      where(type('metafeed/announce')),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      // similar to ack self, we must ack own meta feeds!
+      SSB.net.ebt.request(msg.value.content.metafeed, true)
+    })
+  )
+
+  // find all chat feeds and replicate those
+
+  pull(
+    SSB.db.query(
+      where(slowEqual('value.content.feedpurpose', '8K/chat')),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      // similar to ack self, we must ack own meta feeds!
+      SSB.net.ebt.request(msg.value.content.subfeed, true)
+    })
+  )
 }
 
 function extraModules(secretStack) {
