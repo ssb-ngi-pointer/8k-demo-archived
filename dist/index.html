@@ -10,12 +10,7 @@
 
       <b>Peers</b>
       <div v-for="peer in peers">
-        {{ peer.name || peer.data.name || peer.data.key }}
-      </div>      
-
-      <b>Staged peers</b>
-      <div v-for="s in staged">
-        <button v-on:click="connect(s)">Connect to {{ s.name || s.data.name || s.data.key }}</button>
+        {{ (peer.name || peer.data.name || peer.data.key).substring(0, 12) }}
       </div>      
     </div>
     <div id="main">

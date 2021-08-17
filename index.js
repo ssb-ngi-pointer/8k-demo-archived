@@ -9,8 +9,7 @@ const app = new Vue({
       apps: [
         { Title: 'chat' }
       ],
-      peers: [],
-      staged: []
+      peers: []
     }
   },
 
@@ -19,11 +18,7 @@ const app = new Vue({
       const chat = require('./chat')()
       new Vue(chat)
       // FIXME: load source from db using msgId
-    },
-
-    connect: function(peer) {
-      SSB.net.connectAndRemember(peer.address, peer.data)
-    },
+    }
   }
 })
 
@@ -43,7 +38,18 @@ function ssbReady(sbot) {
   pull(
     SSB.net.conn.stagedPeers(),
     pull.drain((entries) => {
-      app.staged = entries.filter(([, x]) => !!x.key).map(([address, data]) => ({ address, data }))
+      for (const [addr, data] of entries) {
+        const delay = Math.floor(Math.random() * (2000 - 1000 + 1) + 1000)
+        // delayed connect to handle concurrency
+        setTimeout(() => {
+          if (SSB.net.conn.query().peersConnected().some(p => p[0] === addr)) {
+            //console.log("already connected, skipping")
+            return
+          }
+
+          SSB.net.conn.connect(addr, data)
+        }, delay)
+      }
     })
   )
 
