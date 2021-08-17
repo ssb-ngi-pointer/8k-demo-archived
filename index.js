@@ -30,10 +30,13 @@ function ssbReady(sbot) {
     type: 'room'
   })
 
-  pull(SSB.net.conn.hub().listen(), pull.drain((ev) => {
-    if (ev.type.indexOf("failed") >= 0)
-      console.warn("Connection error: ", ev)
-  }))
+  pull(
+    SSB.net.conn.hub().listen(),
+    pull.drain((ev) => {
+      if (ev.type.indexOf("failed") >= 0)
+        console.warn("Connection error: ", ev)
+    })
+  )
 
   pull(
     SSB.net.conn.stagedPeers(),
@@ -66,16 +69,13 @@ function extraModules(secretStack) {
     .use(require("ssb-meta-feeds"))
 }
 
-// in case you want to add or overwrite something from here
-// https://github.com/arj03/ssb-browser-core/blob/master/net.js#L11
 let config = {
   connections: {
     incoming: {
       tunnel: [{ scope: 'public', transform: 'shs' }]
     },
     outgoing: {
-      net: [{ transform: 'shs' }],
-      ws: [{ transform: 'shs' }, { transform: 'noauth' }],
+      ws: [{ transform: 'shs' }],
       tunnel: [{ transform: 'shs' }]
     }
   },
