@@ -87,7 +87,6 @@ module.exports = function () {
               user: msg.value.author.substring(0,5),
               text: msg.value.content.message
             })
-            console.log(this.messages)
           })
         )
       }
