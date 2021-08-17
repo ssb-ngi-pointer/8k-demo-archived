@@ -70,15 +70,11 @@ module.exports = function () {
       render: function(err, SSB) {
         getChatFeed(SSB)
 
-        const { where, and, type, descending, live, toPullStream } = SSB.dbOperators
+        const { where, type, descending, live, toPullStream } = SSB.dbOperators
 
         pull(
           SSB.db.query(
-            where(
-              and(
-                type('8K/chat')
-              )
-            ),
+            where(type('8K/chat')),
             live({old: true}),
             toPullStream()
           ),
