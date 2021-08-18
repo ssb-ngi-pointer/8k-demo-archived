@@ -28,3 +28,13 @@ body {
   padding-left: 30px;
   height: 100%;
 }
+
+.link {
+  cursor: pointer;
+}
+
+ul.dashed {
+  list-style-type: square;
+  margin-left: 0;
+  padding-left: 30px;
+}

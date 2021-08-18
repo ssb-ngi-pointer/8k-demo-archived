@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>8K demo</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <link rel="stylesheet" type="text/css" href="index.css">
   </head>
   <body>
@@ -13,10 +14,13 @@
 
       <br>
 
-      <b>Apps</b>
-      <div v-for="app in apps" v-on:click="useApp(app)">
-        {{ app.Title }}
-      </div>
+      <b>Apps</b><span style="padding-left: 5px;" class="link" v-on:click="newApp()">🌱</span>
+      <ul v-for="app in apps" class="dashed">
+        <li class="link">
+          <span v-on:click="useApp(app)">{{ app.title }}</span>
+          <span style="padding-left: 5px;" class="link" v-on:click="sourceApp(app)">📄</span>
+        </li>
+      </ul>
 
       <br>
 
