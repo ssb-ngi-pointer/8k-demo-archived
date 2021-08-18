@@ -140,11 +140,26 @@ function ssbReady(SSB) {
       toPullStream()
     ),
     pull.drain((msg) => {
-      // similar to ack self, we must ack own meta feeds!
+      // similar to ack self, we must ack own feeds!
       SSB.net.ebt.request(msg.value.content.metafeed, true)
     })
   )
 
+  // find all application feeds and replicate those
+
+  pull(
+    SSB.db.query(
+      where(slowEqual('value.content.feedpurpose', '8K/applications')),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      // similar to ack self, we must ack own feeds!
+      SSB.net.ebt.request(msg.value.content.subfeed, true)
+    })
+  )
+
+  // FIXME: this needs to be more general
   // find all chat feeds and replicate those
 
   pull(
@@ -154,7 +169,7 @@ function ssbReady(SSB) {
       toPullStream()
     ),
     pull.drain((msg) => {
-      // similar to ack self, we must ack own meta feeds!
+      // similar to ack self, we must ack own feeds!
       SSB.net.ebt.request(msg.value.content.subfeed, true)
     })
   )
