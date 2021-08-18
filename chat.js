@@ -16,7 +16,7 @@ module.exports = function () {
 
       SSB.net.metafeeds.findOrCreate(
         metafeed,
-        (f) => f.feedpurpose === '8K/chat',
+        (f) => f.feedpurpose === details.feedpurpose,
         details,
         (err, feed) => {
           chatFeed = feed
