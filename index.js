@@ -46,8 +46,7 @@ function getFunctionBody(f){
 }
 
 function ssbReady(SSB) {
-  console.log("got sbot", SSB)
-
+  //console.log("got sbot", SSB)
   //dumpDB()
 
   // load default app

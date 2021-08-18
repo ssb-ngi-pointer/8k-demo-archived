@@ -14,11 +14,11 @@
 
       <br>
 
-      <b>Apps</b><span style="padding-left: 5px;" class="link" v-on:click="newApp()">🌱</span>
+      <b>Apps</b><span style="padding-left: 5px;" class="link" v-on:click="newApp()" title="create a new app">🌱</span>
       <ul v-for="app in apps" class="dashed">
         <li class="link">
-          <span v-on:click="useApp(app)">{{ app.title }}</span>
-          <span style="padding-left: 5px;" class="link" v-on:click="sourceApp(app)">📄</span>
+          <span v-on:click="useApp(app)" title="open app">{{ app.title }}</span>
+          <span style="padding-left: 5px;" class="link" v-on:click="sourceApp(app)" title="view source">📄</span>
         </li>
       </ul>
 
