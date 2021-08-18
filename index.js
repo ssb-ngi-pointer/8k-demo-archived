@@ -15,10 +15,10 @@ const app = new Vue({
 
   methods: {
     useApp: function(app) {
-      new Vue(app.code())
+      new Vue(app.code(pull, ssbSingleton)).$mount("#app")
     },
     newApp: function() {
-
+      new Vue(require('./create-app')())
     },
     sourceApp: function(app) {
       new Vue(source(app.title, app.source))
@@ -49,9 +49,13 @@ function ssbReady(SSB) {
   //console.log("got sbot", SSB)
   //dumpDB()
 
+  app.id = SSB.net.id
+
+  const { where, type, slowEqual, live, toPullStream } = SSB.dbOperators
+
   // load default app
   const chatApp = require('./chat')
-  new Vue(chatApp())
+  new Vue(chatApp(pull, ssbSingleton)).$mount("#app")
 
   app.apps.push({
     title: 'chat',
@@ -59,7 +63,26 @@ function ssbReady(SSB) {
     source: getFunctionBody(chatApp)
   })
 
-  app.id = SSB.net.id
+  // add created apps
+
+  pull(
+    SSB.db.query(
+      where(type('8K/application')),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      try {
+        app.apps.push({
+          title: msg.value.content.title,
+          code: new Function('pull', 'ssbSingleton', msg.value.content.source),
+          source: msg.value.content.source
+        })
+      } catch (e) {
+        console.log("error creating app", e)
+      }
+    })
+  )
 
   SSB.net.connectAndRemember('wss:between-two-worlds.dk:9999~shs:7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=', {
     key: '@7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=.ed25519',
@@ -107,8 +130,6 @@ function ssbReady(SSB) {
   SSB.net.on('rpc:connect', function (rpc, isClient) {
     SSB.net.ebt.request(rpc.id, true)
   })
-
-  const { where, type, slowEqual, live, toPullStream } = SSB.dbOperators
 
   // find all meta feeds and replicate those
 

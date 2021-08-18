@@ -38,3 +38,8 @@ ul.dashed {
   margin-left: 0;
   padding-left: 30px;
 }
+
+textarea.source {
+  width: 95%;
+  height: 500px;
+}

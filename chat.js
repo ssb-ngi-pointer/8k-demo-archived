@@ -1,7 +1,4 @@
-module.exports = function () {
-  const pull = require('pull-stream')
-  const ssbSingleton = require('ssb-browser-core/ssb-singleton')
-
+module.exports = function (pull, ssbSingleton) {
   let chatFeed
 
   function getChatFeed(SSB) {
@@ -26,8 +23,6 @@ module.exports = function () {
   }
   
   return {
-    el: '#app',
-    
     template: `
     <div id="app">
       <h2>Chat</h2>
