@@ -26,10 +26,10 @@ module.exports = function () {
   }
   
   return {
-    el: '#main',
+    el: '#app',
     
     template: `
-    <div id="chat">
+    <div id="app">
       <h2>Chat</h2>
       <input type='text' v-model="message" @keyup.enter="post()">
       <button v-on:click="post">Send</button>

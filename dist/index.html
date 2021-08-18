@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
-  <title>8K demo</title>
+  <head>
+    <title>8K demo</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+  </head>
   <body>
-    <div id="apps">
+    <div id="menu">
       <b>Your ID</b>
       <div>
         {{ id.substring(0, 12) }}
       </div>
 
+      <br>
+
       <b>Apps</b>
       <div v-for="app in apps" v-on:click="useApp(app)">
         {{ app.Title }}
       </div>
+
+      <br>
 
       <b>Peers</b>
       <div v-for="peer in peers">
@@ -19,6 +26,7 @@
       </div>      
     </div>
     <div id="main">
+      <div id="app"></div>
     </div>
   </body>
   <script src="vue.min.js"></script>

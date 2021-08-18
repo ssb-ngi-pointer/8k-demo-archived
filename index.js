@@ -2,7 +2,7 @@ const ssbSingleton = require('ssb-browser-core/ssb-singleton')
 const pull = require('pull-stream')
 
 const app = new Vue({
-  el: '#apps',
+  el: '#menu',
 
   data: function() {
     return {
@@ -16,8 +16,6 @@ const app = new Vue({
 
   methods: {
     useApp: function(app) {
-      const chat = require('./chat')()
-      new Vue(chat)
       // FIXME: load source from db using msgId
     }
   }
@@ -41,6 +39,10 @@ function ssbReady(SSB) {
   console.log("got sbot", SSB)
 
   //dumpDB()
+
+  // load default app
+  const chat = require('./chat')()
+  new Vue(chat)
 
   app.id = SSB.net.id
 
