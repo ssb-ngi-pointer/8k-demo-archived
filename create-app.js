@@ -2,27 +2,6 @@ module.exports = function () {
   const pull = require('pull-stream')
   const ssbSingleton = require('ssb-browser-core/ssb-singleton')
 
-  let appFeed
-
-  ssbSingleton.getSimpleSSBEventually(
-    () => true,
-    (err, SSB) => {
-      SSB.net.metafeeds.create((err, metafeed) => {
-        const details = {
-          feedpurpose: '8K/applications',
-          feedformat: 'classic',
-        }
-
-        SSB.net.metafeeds.findOrCreate(
-          metafeed,
-          (f) => f.feedpurpose === details.feedpurpose,
-          details,
-          (err, feed) => appFeed = feed
-        )
-      })
-    }
-  )
-  
   return {
     el: '#app',
     
@@ -56,14 +35,33 @@ module.exports = function () {
       },
 
       create: function() {
-        SSB.db.publishAs(appFeed.keys, {
-          type: '8K/application',
-          title: this.title,
-          source: this.source
-        }, (err, msg) => {
-          if (err) console.log(err)
-          else alert("App created!")
-        })
+        ssbSingleton.getSimpleSSBEventually(
+          () => true,
+          (err, SSB) => {
+            SSB.net.metafeeds.create((err, metafeed) => {
+              const details = {
+                feedpurpose: '8K/applications',
+                feedformat: 'classic',
+              }
+
+              SSB.net.metafeeds.findOrCreate(
+                metafeed,
+                (f) => f.feedpurpose === details.feedpurpose,
+                details,
+                (err, appFeed) => {
+                  SSB.db.publishAs(appFeed.keys, {
+                    type: '8K/application',
+                    title: this.title,
+                    source: this.source
+                  }, (err, msg) => {
+                    if (err) console.log(err)
+                    else alert("App created!")
+                  })
+                }
+              )
+            })
+          }
+        )
       },
 
       created: function () {

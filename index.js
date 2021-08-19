@@ -83,22 +83,6 @@ function getFunctionBody(f){
   return fStr.substring(fStr.indexOf('{')+1, fStr.lastIndexOf('}'))
 }
 
-function replicateFeeds(SSB, filter, msgToFeed) {
-  const { where, live, toPullStream } = SSB.dbOperators
-  pull(
-    SSB.db.query(
-      where(filter),
-      live({ old: true }),
-      toPullStream()
-    ),
-    pull.drain((msg) => {
-      console.log("replicating", msgToFeed(msg))
-      // similar to ack self, we must ack own feeds!
-      SSB.net.ebt.request(msgToFeed(msg), true)
-    })
-  )
-}
-
 function ssbReady(SSB) {
   //console.log("got sbot", SSB)
   //dumpDB()
@@ -138,8 +122,11 @@ function ssbReady(SSB) {
     })
   )
 
-  SSB.net.connectAndRemember('wss:between-two-worlds.dk:9999~shs:7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=', {
-    key: '@7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=.ed25519',
+  const roomKey = '@7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY=.ed25519'
+  const room = 'wss:between-two-worlds.dk:9999~shs:7R5/crt8/icLJNpGwP2D7Oqz2WUd7ObCIinFKVR6kNY='
+
+  SSB.net.connectAndRemember(room, {
+    key: roomKey,
     type: 'room'
   })
 
@@ -181,29 +168,43 @@ function ssbReady(SSB) {
   // must ack self
   SSB.net.ebt.request(SSB.net.id, true)
 
+  // main feed replicated on rpc connect
   SSB.net.on('rpc:connect', function (rpc, isClient) {
-    SSB.net.ebt.request(rpc.id, true)
+    if (rpc.id !== roomKey) {
+      console.log("request connect", rpc.id)
+      SSB.net.ebt.request(rpc.id, true)
+    }
   })
 
-  // find all meta feeds and replicate those
-  replicateFeeds(SSB, type('metafeed/announce'),
-                 msg => msg.value.content.metafeed)
+  // find all meta feeds & children and replicate those
+  pull(
+    SSB.db.query(
+      where(type('metafeed/announce')),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      const { metafeed } = msg.value.content
+      console.log("replicating mf", metafeed)
+      // similar to ack self, we must ack own feeds!
+      SSB.net.ebt.request(metafeed, true)
 
-  // find applications & all specific application feeds created and replicate those
-  SSB.net.metafeeds.create((err, metafeed) => {
-    pull(
-      SSB.db.query(
-        where(author(metafeed.keys.id)),
-        live({ old: true }),
-        toPullStream()
-      ),
-      pull.drain((msg) => {
-        const { feedpurpose } = msg.value.content
-        if (feedpurpose !== 'main') {
-          replicateFeeds(SSB, slowEqual('value.content.feedpurpose', feedpurpose),
-                         msg => msg.value.content.subfeed)
-        }
-      })
-    )
-  })
+      pull(
+        SSB.db.query(
+          where(author(metafeed)),
+          live({ old: true }),
+          toPullStream()
+        ),
+        pull.drain((msg) => {
+          const { subfeed, feedpurpose } = msg.value.content
+           // FIXME: some kind of UI to toggle what feedpurposes to replicate
+          if (feedpurpose !== 'main') { // special
+            console.log("replicating subfeed", subfeed)
+            // similar to ack self, we must ack own feeds!
+            SSB.net.ebt.request(subfeed, true)
+          }
+        })
+      )
+    })
+  )
 }

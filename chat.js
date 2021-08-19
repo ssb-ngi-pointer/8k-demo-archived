@@ -1,14 +1,13 @@
 module.exports = function (pull, ssbSingleton) {
-  let chatFeed
+  let chatFeed = null
 
-  function getChatFeed(SSB) {
+  function getChatFeed(SSB, cb) {
+    if (chatFeed !== null) return cb(null, chatFeed)
+
     SSB.net.metafeeds.create((err, metafeed) => {
       const details = {
         feedpurpose: '8K/chat',
         feedformat: 'classic',
-        metadata: {
-          source: '' // '%FIXME.ed25519'
-        }
       }
 
       SSB.net.metafeeds.findOrCreate(
@@ -16,12 +15,15 @@ module.exports = function (pull, ssbSingleton) {
         (f) => f.feedpurpose === details.feedpurpose,
         details,
         (err, feed) => {
+          if (err) return cb(err)
+
           chatFeed = feed
+          cb(null, chatFeed)
         }
       )
     })
   }
-  
+
   return {
     template: `
     <div id="app">
@@ -45,14 +47,21 @@ module.exports = function (pull, ssbSingleton) {
     methods: {
       post: function() {
         if (this.message === '') return
-        
-        SSB.db.publishAs(chatFeed.keys, {
-          type: '8K/chat',
-          message: this.message
-        }, (err, msg) => {
-          if (err) console.log(err)
-          else this.message = ''
-        })
+
+        ssbSingleton.getSimpleSSBEventually(
+          () => this.componentStillLoaded,
+          (err, SSB) => {
+            getChatFeed(SSB, (err, chatFeed) => {
+              SSB.db.publishAs(chatFeed.keys, {
+                type: '8K/chat',
+                message: this.message
+              }, (err, msg) => {
+                if (err) console.log(err)
+                else this.message = ''
+              })
+            })
+          }
+        )
       },
       
       load: function() {
@@ -63,8 +72,6 @@ module.exports = function (pull, ssbSingleton) {
       },
 
       render: function(err, SSB) {
-        getChatFeed(SSB)
-
         const { where, type, descending, live, toPullStream } = SSB.dbOperators
 
         pull(
