@@ -2,21 +2,26 @@ module.exports = function () {
   const pull = require('pull-stream')
   const ssbSingleton = require('ssb-browser-core/ssb-singleton')
 
-  function getApplicationsFeed(SSB, cb) {
-    SSB.net.metafeeds.create((err, metafeed) => {
-      const details = {
-        feedpurpose: '8K/applications',
-        feedformat: 'classic',
-      }
+  let appFeed
 
-      SSB.net.metafeeds.findOrCreate(
-        metafeed,
-        (f) => f.feedpurpose === details.feedpurpose,
-        details,
-        cb
-      )
-    })
-  }
+  ssbSingleton.getSimpleSSBEventually(
+    () => true,
+    (err, SSB) => {
+      SSB.net.metafeeds.create((err, metafeed) => {
+        const details = {
+          feedpurpose: '8K/applications',
+          feedformat: 'classic',
+        }
+
+        SSB.net.metafeeds.findOrCreate(
+          metafeed,
+          (f) => f.feedpurpose === details.feedpurpose,
+          details,
+          (err, feed) => appFeed = feed
+        )
+      })
+    }
+  )
   
   return {
     el: '#app',
@@ -37,8 +42,7 @@ module.exports = function () {
     data: function() {
       return {
         title: '',
-        source: '',
-        componentStillLoaded: false
+        source: ''
       }
     },
 
@@ -52,34 +56,18 @@ module.exports = function () {
       },
 
       create: function() {
-        const self = this
-        ssbSingleton.getSimpleSSBEventually(
-          () => this.componentStillLoaded,
-          (err, SSB) => {
-            getApplicationsFeed(SSB, (err, appFeed) => {
-              console.log("appfeed keys", appFeed.keys)
-              SSB.db.publishAs(appFeed.keys, {
-                type: '8K/application',
-                title: self.title,
-                source: self.source
-              }, (err, msg) => {
-                console.log("create app", msg)
-                if (err) console.log(err)
-                else alert("App created!")
-              })
-            })
-          }
-        )
+        SSB.db.publishAs(appFeed.keys, {
+          type: '8K/application',
+          title: this.title,
+          source: this.source
+        }, (err, msg) => {
+          if (err) console.log(err)
+          else alert("App created!")
+        })
       },
 
       created: function () {
-        this.componentStillLoaded = true
-
         document.title = '8K - create app'
-      },
-
-      destroyed: function () {
-        this.componentStillLoaded = false
       }
     }
   }

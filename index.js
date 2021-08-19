@@ -2,6 +2,44 @@ const ssbSingleton = require('ssb-browser-core/ssb-singleton')
 const pull = require('pull-stream')
 const source = require('./source')
 
+function extraModules(secretStack) {
+  return secretStack
+    .use(require("ssb-meta-feeds"))
+}
+
+let config = {
+  connections: {
+    incoming: {
+      tunnel: [{ scope: 'public', transform: 'shs' }]
+    },
+    outgoing: {
+      ws: [{ transform: 'shs' }],
+      tunnel: [{ transform: 'shs' }]
+    }
+  },
+  conn: {
+    populatePubs: false
+  },
+  ebt: {
+    logging: false
+  }
+}
+
+// setup ssb browser core
+ssbSingleton.setup("/.ssb-8k", config, extraModules, () => {})
+
+ssbSingleton.getSSBEventually(
+  -1,
+  () => { return true },
+  (SSB) => { return SSB && SSB.net },
+  (err, SSB) => {
+    if (err) console.error(err)
+    else ssbReady(SSB)
+  }
+)
+
+const createApp = require('./create-app')()
+
 const app = new Vue({
   el: '#menu',
 
@@ -18,7 +56,7 @@ const app = new Vue({
       new Vue(app.code(pull, ssbSingleton)).$mount("#app")
     },
     newApp: function() {
-      new Vue(require('./create-app')())
+      new Vue(createApp)
     },
     sourceApp: function(app) {
       new Vue(source(app.title, app.source))
@@ -45,13 +83,29 @@ function getFunctionBody(f){
   return fStr.substring(fStr.indexOf('{')+1, fStr.lastIndexOf('}'))
 }
 
+function replicateFeeds(SSB, filter, msgToFeed) {
+  const { where, live, toPullStream } = SSB.dbOperators
+  pull(
+    SSB.db.query(
+      where(filter),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      console.log("replicating", msgToFeed(msg))
+      // similar to ack self, we must ack own feeds!
+      SSB.net.ebt.request(msgToFeed(msg), true)
+    })
+  )
+}
+
 function ssbReady(SSB) {
   //console.log("got sbot", SSB)
   //dumpDB()
 
   app.id = SSB.net.id
 
-  const { where, type, slowEqual, live, toPullStream } = SSB.dbOperators
+  const { where, type, author, slowEqual, live, toPullStream } = SSB.dbOperators
 
   // load default app
   const chatApp = require('./chat')
@@ -132,81 +186,24 @@ function ssbReady(SSB) {
   })
 
   // find all meta feeds and replicate those
+  replicateFeeds(SSB, type('metafeed/announce'),
+                 msg => msg.value.content.metafeed)
 
-  pull(
-    SSB.db.query(
-      where(type('metafeed/announce')),
-      live({ old: true }),
-      toPullStream()
-    ),
-    pull.drain((msg) => {
-      // similar to ack self, we must ack own feeds!
-      SSB.net.ebt.request(msg.value.content.metafeed, true)
-    })
-  )
-
-  // find all application feeds and replicate those
-
-  pull(
-    SSB.db.query(
-      where(slowEqual('value.content.feedpurpose', '8K/applications')),
-      live({ old: true }),
-      toPullStream()
-    ),
-    pull.drain((msg) => {
-      // similar to ack self, we must ack own feeds!
-      SSB.net.ebt.request(msg.value.content.subfeed, true)
-    })
-  )
-
-  // FIXME: this needs to be more general
-  // find all chat feeds and replicate those
-
-  pull(
-    SSB.db.query(
-      where(slowEqual('value.content.feedpurpose', '8K/chat')),
-      live({ old: true }),
-      toPullStream()
-    ),
-    pull.drain((msg) => {
-      // similar to ack self, we must ack own feeds!
-      SSB.net.ebt.request(msg.value.content.subfeed, true)
-    })
-  )
+  // find applications & all specific application feeds created and replicate those
+  SSB.net.metafeeds.create((err, metafeed) => {
+    pull(
+      SSB.db.query(
+        where(author(metafeed.keys.id)),
+        live({ old: true }),
+        toPullStream()
+      ),
+      pull.drain((msg) => {
+        const { feedpurpose } = msg.value.content
+        if (feedpurpose !== 'main') {
+          replicateFeeds(SSB, slowEqual('value.content.feedpurpose', feedpurpose),
+                         msg => msg.value.content.subfeed)
+        }
+      })
+    )
+  })
 }
-
-function extraModules(secretStack) {
-  return secretStack
-    .use(require("ssb-meta-feeds"))
-}
-
-let config = {
-  connections: {
-    incoming: {
-      tunnel: [{ scope: 'public', transform: 'shs' }]
-    },
-    outgoing: {
-      ws: [{ transform: 'shs' }],
-      tunnel: [{ transform: 'shs' }]
-    }
-  },
-  conn: {
-    populatePubs: false
-  },
-  ebt: {
-    logging: false
-  }
-}
-
-// setup ssb browser core
-ssbSingleton.setup("/.ssb-8k", config, extraModules, () => {})
-
-ssbSingleton.getSSBEventually(
-  -1,
-  () => { return true },
-  (SSB) => { return SSB && SSB.net },
-  (err, SSB) => {
-    if (err) console.error(err)
-    else ssbReady(SSB)
-  }
-)
