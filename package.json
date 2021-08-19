@@ -14,7 +14,7 @@
   "license": "Beerware",
   "dependencies": {
     "ssb-browser-core": "github:arj03/ssb-browser-core#bendy-butt",
-    "ssb-meta-feeds": "^0.15.0",
+    "ssb-meta-feeds": "github:ssb-ngi-pointer/ssb-meta-feeds#fix-rootmeta-concurrency",
     "vue": "^2.6.14"
   },
   "devDependencies": {
