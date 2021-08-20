@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify index.js -o dist/index.js && cp node_modules/vue/dist/vue.min.js dist/"
+    "build": "NODE_ENV=production browserify index.js -o dist/index.js && cp node_modules/vue/dist/vue.min.js dist/"
   },
   "repository": {
     "type": "git",
