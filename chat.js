@@ -72,12 +72,12 @@ module.exports = function (pull, ssbSingleton) {
       },
 
       render: function(err, SSB) {
-        const { where, type, descending, live, toPullStream } = SSB.dbOperators
+        const { where, type, live, toPullStream } = SSB.dbOperators
 
         pull(
           SSB.db.query(
             where(type('8K/chat')),
-            live({old: true}),
+            live({ old: true }),
             toPullStream()
           ),
           pull.drain((msg) => {
