@@ -73,12 +73,12 @@ module.exports = function (pull, ssbSingleton) {
       },
 
       render: function(err, SSB) {
-        const { where, type, descending, live, toPullStream } = SSB.dbOperators
+        const { where, type, live, toPullStream } = SSB.dbOperators
 
         pull(
           SSB.db.query(
             where(type('8K/chat')),
-            live({old: true}),
+            live({ old: true }),
             toPullStream()
           ),
           pull.drain((msg) => {
@@ -271,7 +271,8 @@ function ssbReady(SSB) {
 
   app.id = SSB.net.id
 
-  const { where, type, author, slowEqual, live, toPullStream } = SSB.dbOperators
+  const { where, type, author, slowEqual, live,
+          toPullStream, toCallback } = SSB.dbOperators
 
   // load default app
   const chatApp = require('./chat')
@@ -389,6 +390,68 @@ function ssbReady(SSB) {
       )
     })
   )
+
+  // replicate non-direct connections
+
+  pull(
+    SSB.db.query(
+      where(type('replication')),
+      live({ old: true }),
+      toPullStream()
+    ),
+    pull.drain((msg) => {
+      const { feed } = msg.value.content
+      console.log("replicating non-direct", feed)
+      SSB.net.ebt.request(feed, true)
+    })
+  )
+
+  // maintain a list of main feeds we have seen (friends-lite)
+
+  SSB.net.metafeeds.create((err, metafeed) => {
+    const details = {
+      feedpurpose: 'replication',
+      feedformat: 'classic',
+    }
+
+    SSB.net.metafeeds.findOrCreate(
+      metafeed,
+      (f) => f.feedpurpose === details.feedpurpose,
+      details,
+      (err, replicationFeed) => {
+        SSB.db.query(
+          where(author(replicationFeed.keys.id)),
+          toCallback((err, messages) => {
+            if (err) console.error(err)
+
+            let existing = messages.map(msg => {
+              return msg.value.content.feed
+            })
+
+            pull(
+              SSB.db.query(
+                where(type('metafeed/announce')),
+                live({ old: true }),
+                toPullStream()
+              ),
+              pull.drain((msg) => {
+                const { author } = msg.value
+                if (!existing.includes(author)) {
+                  SSB.db.publishAs(replicationFeed.keys, {
+                    type: 'replication',
+                    feed: author
+                  }, (err, msg) => {
+                    if (err) console.error("failed to add replication", err)
+                  })
+
+                  existing.push(author)
+                }
+              })
+            )
+          })
+        )
+      })
+  })
 }
 
 },{"./chat":1,"./create-app":2,"./source":878,"pull-stream":517,"ssb-browser-core/ssb-singleton":714,"ssb-meta-feeds":781}],4:[function(require,module,exports){
