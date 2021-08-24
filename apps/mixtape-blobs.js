@@ -217,15 +217,18 @@ return {
           }
           this.mixtapes.push(mixtape)
 
+          const peers = SSB.net.conn.query().peersConnected()
+
           if (coverBlob) {
-            SSB.net.blobs.localGet(coverBlob, (err, url) => {
+            SSB.net.blobs.getBlob(coverBlob, peers, (err, url) => {
+              console.log(err)
               mixtape.cover = url
             })
           }
 
           for (let song of songs) {
             if (song.blob) {
-              SSB.net.blobs.localGet(song.blob, (err, url) => {
+              SSB.net.blobs.getBlob(song.blob, peers, (err, url) => {
                 song.url = url
               })
             }
