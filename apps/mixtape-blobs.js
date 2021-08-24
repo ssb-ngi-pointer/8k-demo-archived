@@ -110,6 +110,7 @@ return {
                 SSB.net.blobs.localGet(blobId, (err, url) => {
                   if (!err) {
                     self.cover = url
+                    self.coverBlob = blobId
                   }
                 })
               })
@@ -167,6 +168,7 @@ return {
             SSB.db.publishAs(feed.keys, {
               type: '8K/mixtape',
               cover: this.cover,
+              coverBlob: this.coverBlob,
               title: this.title,
               description: this.description,
               songs: this.songs
@@ -202,14 +204,32 @@ return {
           toPullStream()
         ),
         pull.drain((msg) => {
-          this.mixtapes.push({
-            user: msg.value.author.substring(0,5),
-            timestamp: (new Date(msg.value.timestamp)).toLocaleString(),
-            cover: msg.value.content.cover,
-            title: msg.value.content.title,
-            description: msg.value.content.description,
-            songs: msg.value.content.songs
-          })
+          const { author, timestamp, content } =  msg.value
+          const { cover, coverBlob, title, description, songs } = content
+
+          const mixtape = {
+            user: author.substring(0,5),
+            timestamp: (new Date(timestamp)).toLocaleString(),
+            cover,
+            title,
+            description,
+            songs
+          }
+          this.mixtapes.push(mixtape)
+
+          if (coverBlob) {
+            SSB.net.blobs.localGet(coverBlob, (err, url) => {
+              mixtape.cover = url
+            })
+          }
+
+          for (let song of songs) {
+            if (song.blob) {
+              SSB.net.blobs.localGet(song.blob, (err, url) => {
+                song.url = url
+              })
+            }
+          }
         })
       )
     }

@@ -22,6 +22,9 @@ let config = {
   },
   ebt: {
     logging: false
+  },
+  blobs: {
+    max: 10 * 1024 * 1024
   }
 }
 
