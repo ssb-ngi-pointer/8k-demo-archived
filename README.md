@@ -30,6 +30,6 @@ application.
 The apps folder contains a few sample applications one can use for
 inspiration.
 
-[screenshot]: ./screenshot.jpg
+[screenshot]: screenshot.png
 [ssb-browser-core]: https://github.com/arj03/ssb-browser-core
 [room]: The idea with the application is that 
