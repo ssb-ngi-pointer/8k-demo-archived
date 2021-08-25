@@ -32,4 +32,4 @@ inspiration.
 
 [screenshot]: screenshot.png
 [ssb-browser-core]: https://github.com/arj03/ssb-browser-core
-[room]: The idea with the application is that 
+[room]: https://github.com/ssb-ngi-pointer/go-ssb-room/
