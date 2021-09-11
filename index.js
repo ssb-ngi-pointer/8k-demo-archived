@@ -92,6 +92,54 @@ function ssbReady(SSB) {
 
   app.id = SSB.net.id
 
+  // FIXME: this should be loaded from ssb-bendy-butt or somewhere else
+  const SSBURI = require('ssb-uri2')
+  const bb = require('ssb-bendy-butt')
+  const bendyButtMethods = {
+    // used in request, block, cleanClock, sbot.post
+    isFeed: SSBURI.isBendyButtV1FeedSSBURI,
+    getAtSequence(sbot, pair, cb) {
+      sbot.getAtSequence([pair.id, pair.sequence], (err, msg) => {
+        console.log("encoding msg val", msg.value.author)
+        cb(err, msg ? bb.encode(msg.value) : null)
+      })
+    },
+    appendMsg(sbot, msgVal, cb) {
+      sbot.add(bb.decode(msgVal), (err, msg) => {
+        cb(err && err.fatal ? err : null, msg)
+      })
+    },
+    convertMsg(msgVal) {
+      return bb.encode(msgVal)
+    },
+
+    // used in ebt:stream to distinguish between messages and notes
+    isMsg(bbVal) {
+      if (Buffer.isBuffer(bbVal)) {
+        const msgVal = bb.decode(bbVal)
+        return msgVal && SSBURI.isBendyButtV1FeedSSBURI(msgVal.author)
+      } else {
+        return bbVal && SSBURI.isBendyButtV1FeedSSBURI(bbVal.author)
+      }
+    },
+    // used in ebt:events
+    getMsgAuthor(bbVal) {
+      if (Buffer.isBuffer(bbVal))
+        return bb.decode(bbVal).author
+      else
+        return bbVal.author
+    },
+    // used in ebt:events
+    getMsgSequence(bbVal) {
+      if (Buffer.isBuffer(bbVal))
+        return bb.decode(bbVal).sequence
+      else
+        return bbVal.sequence
+    }
+  }
+
+  SSB.net.ebt.registerFormat('bendybutt', bendyButtMethods)
+
   const { where, type, author, slowEqual, live,
           toPullStream, toCallback } = SSB.dbOperators
 
