@@ -93,6 +93,7 @@ return {
               else {
                 this.name = ''
                 this.image = ''
+                alert("profile set!")
               }
             })
           })
@@ -120,7 +121,6 @@ return {
                 toPullStream()
               ),
               pull.drain((msg) => {
-                console.log("got", msg)
                 const { name, image } = msg.value.content
                 this.name = name
                 this.image = image
