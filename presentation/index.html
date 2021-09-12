@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <title>8K demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/solarized.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+	<section>
+          <h2>8K demo</h2>
+          <img src="demo_mekka.jpg" style="border: 0; height: 500px; box-shadow: 0 0 0px;"/>
+        </section>
+	<section>
+	  <h2>Showcase ngi pointer work</h2>
+	  <ul>
+	    <li>Rooms 2.0</li>
+	    <li>Meta feeds</li>
+	    <li>Queries in SSB-DB2</li>
+	  </ul>
+	</section>
+	<section>
+          <h2>Rooms 2.0</h2>
+          <ul>
+            <li>Written in Go</li>
+            <li>Private modes: Open, Community, Restricted</li>
+            <li>Aliases</li>
+          </ul>
+          <br><br>
+          <a href="https://github.com/ssb-ngi-pointer/rooms2">https://github.com/ssb-ngi-pointer/rooms2</a>
+        </section>
+        <section>
+          <h2>SSB ➡ Meta feeds</h2>
+          <ul>
+            <li>1 linear feed per user/device</li>
+            <li>Hierarchy of feeds per device</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Meta feeds</h2>
+          <ul>
+            <li>Root meta feed</li>
+            <li><a href="https://github.com/ssb-ngi-pointer/bendy-butt-spec">Binary bendy butt feed format</a></li>
+            <li>References other feeds (regular or meta feeds)</li>
+            <li>Cross-signed</li>
+            <li>Feed keys generated from seed (saved on main feed)</li>
+          </ul>
+        </section>
+        <section>
+          <h2>8K demo</h2>
+          <ul>
+	    <li>Meta feeds client running purely in the browser</li>
+	    <li>1 app per feed</li>
+	    <li>Create apps as classic messages (8K limit)</li>
+            <li>Uses a room server for connections</li>
+	    <li>Everything stored on clients</li>
+          </ul>
+        </section>
+	<section>
+          <img src="large-hermies-dancing.gif" style="border: 0; box-shadow: 0 0 0px;"/>
+          <br>
+	  <a href="https://between-two-worlds.dk/8k/">https://between-two-worlds.dk/8k/</a>
+	</section>
+      </div>
+    </div>
+    <script src="node_modules/reveal.js/dist/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+          hash: true
+      });
+    </script>
+  </body>
+</html>
