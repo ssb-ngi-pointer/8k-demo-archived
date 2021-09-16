@@ -110,29 +110,32 @@ return {
         ),
         pull.drain((msg) => {
           const { timestamp, author, content } = msg.value
-          const profileId = chatToMetafeed[author]['8K/profile']
-          const mainId = chatToMetafeed[author]['main']
-          const profile = profileId ? profiles.find(msg => {
-            return msg.value.author === profileId
-          }) : undefined
+          const authorChat = chatToMetafeed[author]
+          if (authorChat) {
+            const profileId = authorChat['8K/profile']
+            const mainId = authorChat['main']
+            const profile = profileId ? profiles.find(msg => {
+              return msg.value.author === profileId
+            }) : undefined
 
-          const chatMessage = {
-            timestamp: (new Date(timestamp)).toLocaleString(),
-            user: profile ? profile.value.content.name : mainId.substring(0,5),
-            img: '',
-            text: msg.value.content.message
+            const chatMessage = {
+              timestamp: (new Date(timestamp)).toLocaleString(),
+              user: profile ? profile.value.content.name : mainId.substring(0,5),
+              img: '',
+              text: msg.value.content.message
+            }
+
+            if (profile && profile.value.content.image) {
+              console.log("getting img", profile.value.content.image)
+              const peers = SSB.net.conn.query().peersConnected()
+              SSB.net.blobs.getBlob(profile.value.content.image, peers, (err, url) => {
+                console.log("setting img", url)
+                chatMessage.img = url
+              })
+            }
+
+            this.messages.push(chatMessage)
           }
-
-          if (profile && profile.value.content.image) {
-            console.log("getting img", profile.value.content.image)
-            const peers = SSB.net.conn.query().peersConnected()
-            SSB.net.blobs.getBlob(profile.value.content.image, peers, (err, url) => {
-              console.log("setting img", url)
-              chatMessage.img = url
-            })
-          }
-
-          this.messages.push(chatMessage)
         })
       )
     }
