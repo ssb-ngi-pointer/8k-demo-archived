@@ -92,53 +92,7 @@ function ssbReady(SSB) {
 
   app.id = SSB.net.id
 
-  // FIXME: this should be loaded from ssb-bendy-butt or somewhere else
-  const SSBURI = require('ssb-uri2')
-  const bb = require('ssb-bendy-butt')
-  const bendyButtMethods = {
-    // used in request, block, cleanClock, sbot.post
-    isFeed: SSBURI.isBendyButtV1FeedSSBURI,
-    getAtSequence(sbot, pair, cb) {
-      sbot.getAtSequence([pair.id, pair.sequence], (err, msg) => {
-        console.log("encoding msg val", msg.value.author)
-        cb(err, msg ? bb.encode(msg.value) : null)
-      })
-    },
-    appendMsg(sbot, msgVal, cb) {
-      sbot.add(bb.decode(msgVal), (err, msg) => {
-        cb(err && err.fatal ? err : null, msg)
-      })
-    },
-    convertMsg(msgVal) {
-      return bb.encode(msgVal)
-    },
-
-    // used in ebt:stream to distinguish between messages and notes
-    isMsg(bbVal) {
-      if (Buffer.isBuffer(bbVal)) {
-        const msgVal = bb.decode(bbVal)
-        return msgVal && SSBURI.isBendyButtV1FeedSSBURI(msgVal.author)
-      } else {
-        return bbVal && SSBURI.isBendyButtV1FeedSSBURI(bbVal.author)
-      }
-    },
-    // used in ebt:events
-    getMsgAuthor(bbVal) {
-      if (Buffer.isBuffer(bbVal))
-        return bb.decode(bbVal).author
-      else
-        return bbVal.author
-    },
-    // used in ebt:events
-    getMsgSequence(bbVal) {
-      if (Buffer.isBuffer(bbVal))
-        return bb.decode(bbVal).sequence
-      else
-        return bbVal.sequence
-    }
-  }
-
-  SSB.net.ebt.registerFormat('bendybutt', bendyButtMethods)
+  SSB.net.ebt.registerFormat(require('ssb-ebt/formats/bendy-butt'))
 
   const { where, type, author, slowEqual, live,
           toPullStream, toCallback } = SSB.dbOperators
@@ -190,15 +144,26 @@ function ssbReady(SSB) {
     })
   )
 
-  // promiscous mode, we connect to all and replicate all
+  let delayedConnections = 0
+  const maxConnections = 4 // 3 + room
 
+  // promiscous mode, we connect to all and replicate all
   pull(
     SSB.net.conn.stagedPeers(),
     pull.drain((entries) => {
+      if (app.peers.length + delayedConnections >= maxConnections)
+        return
+
       for (const [addr, data] of entries) {
+        if (app.peers.length + delayedConnections >= maxConnections)
+          break
+
+        delayedConnections += 1
+
         const delay = Math.floor(Math.random() * (2000 - 1000 + 1) + 1000)
         // delayed connect to handle concurrency
         setTimeout(() => {
+          delayedConnections -= 1
           if (SSB.net.conn.query().peersConnected().some(p => p[0] === addr)) {
             //console.log("already connected, skipping")
             return
@@ -216,6 +181,15 @@ function ssbReady(SSB) {
       app.peers = entries.filter(([, x]) => !!x.key).map(([address, data]) => ({ address, data }))
     })
   )
+
+  setInterval(() => {
+    if (app.peers.length === 0) {
+      SSB.net.conn.connect(room, {
+        key: roomKey,
+        type: 'room'
+      })
+    }
+  }, 1000)
 
   // must ack self
   SSB.net.ebt.request(SSB.net.id, true)
