@@ -173,14 +173,13 @@ return {
               description: this.description,
               songs: this.songs
             }, (err, msg) => {
-              if (err) {
-                console.log(err)
-              } else {
-                this.cover = ''
-                this.description = ''
-                this.title = ''
-                this.songs = []
-              }
+              if (err) return console.log(err)
+
+              this.browse = true
+              this.cover = ''
+              this.description = ''
+              this.title = ''
+              this.songs = []
             })
           })
         }
@@ -240,9 +239,7 @@ return {
 
   created: function () {
     this.componentStillLoaded = true
-
     document.title = '8K - mixtape'
-
     this.load()
   },
 
