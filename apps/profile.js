@@ -29,7 +29,7 @@ return {
       <h2>Profile</h2>
       <img :src='imageURL' style="max-width: 500px; max-height: 500px;"><br>
       <input type="file" v-on:change="onFileSelect"><br>
-      <input id="name" type="text" v-model="name" placeholder="nickname">
+      <input id="name" type="text" v-model="name" placeholder="nickname" @keyup.enter="save()">
       <button v-on:click="save">Save</button>
     </div>`,
 
@@ -91,8 +91,6 @@ return {
             }, (err, msg) => {
               if (err) console.log(err)
               else {
-                this.name = ''
-                this.image = ''
                 alert("profile set!")
               }
             })
