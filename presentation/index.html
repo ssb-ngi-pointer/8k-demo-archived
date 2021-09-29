@@ -9,36 +9,60 @@
     <div class="reveal">
       <div class="slides">
 	<section>
-          <h2>8K demo</h2>
-          <img src="demo_mekka.jpg" style="border: 0; height: 500px; box-shadow: 0 0 0px;"/>
-        </section>
-	<section>
 	  <h2>NGI pointer</h2>
 	  <ul>
 	    <li>Rooms 2.0</li>
 	    <li>Meta feeds</li>
-	    <li>Queries in SSB-DB2</li>
+	    <li>SSB-DB2</li>
 	  </ul>
 	</section>
+	<section>
+	  <h2>Problems solving?</h2>
+	  <ul>
+	    <li style="margin-bottom: 25px;">Hard to join</li>
+	    <li>Initial sync</li>
+	  </ul>
+	</section>
+	<section>
+	  <h2>Joining</h2>
+        </section>
+	<section>
+          <h2>Pubs & peer invites?</h2>
+          <ul>
+            <li>Solves NAT problem</li>
+            <li>Storage - store & forward</li>
+            <li>Social graph - peer invites</li>
+          </ul>
+        </section>
 	<section>
           <h2>Rooms 2.0</h2>
           <ul>
             <li>Written in Go</li>
-            <li>Private modes: Open, Community, Restricted</li>
-            <li>Aliases</li>
+            <li>Privacy modes
+              <ul>
+                <li>Open</li>
+                <li>Community</li>
+                <li>Restricted</li>
+              </ul>
+            </li>
+            <li>Aliases & invite management</li>
           </ul>
           <br><br>
           <a href="https://github.com/ssb-ngi-pointer/rooms2">https://github.com/ssb-ngi-pointer/rooms2</a>
         </section>
+	<section>
+	  <h2>Initial sync</h2>
+        </section>
         <section>
           <h2>SSB ➡ Meta feeds</h2>
           <ul>
-            <li>1 linear feed per user/device</li>
+            <li style="margin-bottom: 25px;">1 linear feed per user/device</li>
             <li>Hierarchy of feeds per device</li>
           </ul>
         </section>
         <section>
-          <img src="metafeeds.jpg" style="border: 0; height: 600px; box-shadow: 0 0 0px;"/>
+          <h2>Meta feeds</h2>
+          <img src="metafeed-structure-with-feeds-simplified.png" style="border: 0; height: 600px; box-shadow: 0 0 0px;"/>
         </section>
         <section>
           <h2>Meta feeds</h2>
@@ -51,15 +75,16 @@
           </ul>
         </section>
         <section>
-          <h2>Potential usages of meta feeds</h2>
+          <h2>Initial sync?</h2>
           <ul>
-            <li>Partial replication</li>
-            <li>Indexes</li>
-            <li>Fusion identity</li>
-            <li>Network identity</li>
-            <li>Feed per private group</li>
-            <li>...</li>
+            <li>SSB-DB2 - 3x improvement</li>
+            <li>Indexes - retroactive tangle</li>
+            <li>Sliced replication</li>
           </ul>
+        </section>
+	<section>
+          <h2>8K demo</h2>
+          <img src="demo_mekka.jpg" style="border: 0; height: 500px; box-shadow: 0 0 0px;"/>
         </section>
         <section>
           <h2>8K demo</h2>
