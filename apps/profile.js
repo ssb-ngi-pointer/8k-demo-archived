@@ -3,7 +3,7 @@ let profileFeed = null
 function getProfileFeed(SSB, cb) {
   if (profileFeed !== null) return cb(null, profileFeed)
 
-  SSB.net.metafeeds.create((err, metafeed) => {
+  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/profile',
       feedformat: 'classic'

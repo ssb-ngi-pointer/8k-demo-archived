@@ -3,7 +3,7 @@ let feed = null
 function getFeed(SSB, cb) {
   if (feed !== null) return cb(null, feed)
 
-  SSB.net.metafeeds.create((err, metafeed) => {
+  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/mixtape',
       feedformat: 'classic',

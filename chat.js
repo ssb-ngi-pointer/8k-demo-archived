@@ -4,7 +4,7 @@ module.exports = function (pull, ssbSingleton) {
   function getChatFeed(SSB, cb) {
     if (chatFeed !== null) return cb(null, chatFeed)
 
-    SSB.net.metafeeds.create((err, metafeed) => {
+    SSB.net.metafeeds.findOrCreate((err, metafeed) => {
       const details = {
         feedpurpose: '8K/chat',
         feedformat: 'classic',

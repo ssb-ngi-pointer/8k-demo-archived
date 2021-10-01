@@ -1,7 +1,7 @@
 let chatFeed
 
 function getChatFeed(SSB) {
-  SSB.net.metafeeds.create((err, metafeed) => {
+  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/chat',
       feedformat: 'classic'

@@ -251,7 +251,7 @@ function ssbReady(SSB) {
 
   // maintain a list of main feeds we have seen (friends-lite)
 
-  SSB.net.metafeeds.create((err, metafeed) => {
+  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: 'replication',
       feedformat: 'classic',

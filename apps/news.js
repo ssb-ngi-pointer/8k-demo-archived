@@ -3,7 +3,7 @@ let newsFeed = null
 function getNewsFeed(SSB, cb) {
   if (newsFeed !== null) return cb(null, newsFeed)
 
-  SSB.net.metafeeds.create((err, metafeed) => {
+  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/news',
       feedformat: 'classic',

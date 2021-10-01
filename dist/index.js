@@ -5,7 +5,7 @@ module.exports = function (pull, ssbSingleton) {
   function getChatFeed(SSB, cb) {
     if (chatFeed !== null) return cb(null, chatFeed)
 
-    SSB.net.metafeeds.create((err, metafeed) => {
+    SSB.net.metafeeds.findOrCreate((err, metafeed) => {
       const details = {
         feedpurpose: '8K/chat',
         feedformat: 'classic',
@@ -146,7 +146,7 @@ module.exports = function () {
         ssbSingleton.getSimpleSSBEventually(
           () => true,
           (err, SSB) => {
-            SSB.net.metafeeds.create((err, metafeed) => {
+            SSB.net.metafeeds.findOrCreate((err, metafeed) => {
               const details = {
                 feedpurpose: '8K/applications',
                 feedformat: 'classic',
@@ -433,7 +433,7 @@ function ssbReady(SSB) {
 
   // maintain a list of main feeds we have seen (friends-lite)
 
-  SSB.net.metafeeds.create((err, metafeed) => {
+  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: 'replication',
       feedformat: 'classic',
@@ -83192,31 +83192,11 @@ const validate = require('./validate')
 const alwaysTrue = () => true
 
 exports.init = function (sbot, config) {
-  function filterRootMetafeed(visit, cb) {
-    sbot.metafeeds.query.getSeed((err, seed) => {
-      if (err) return cb(err)
-      if (!seed) return cb(null, [])
-      const metafeed = {
-        seed,
-        keys: sbot.metafeeds.keys.deriveRootMetaFeedKeyFromSeed(seed),
-      }
-
-      if (visit(metafeed)) {
-        cb(null, [metafeed])
-      } else {
-        cb(null, [])
-      }
-    })
-  }
-
-  function filter(metafeed, maybeVisit, maybeCB) {
-    const visit = maybeVisit || alwaysTrue
+  function filter(metafeed, visit, maybeCB) {
     if (!metafeed) {
-      const cb = maybeCB
-      filterRootMetafeed(visit, cb)
+      cb(new Error('expected metafeed argument'))
     } else if (typeof metafeed === 'function') {
-      const cb = metafeed
-      filterRootMetafeed(visit, cb)
+      cb(new Error('expected metafeed argument and visit argument'))
     } else {
       const cb = maybeCB
       sbot.metafeeds.query.hydrate(
@@ -83232,20 +83212,11 @@ exports.init = function (sbot, config) {
     }
   }
 
-  function find(metafeed, maybeVisit, maybeCB) {
-    const visit = maybeVisit || alwaysTrue
+  function find(metafeed, visit, maybeCB) {
     if (!metafeed) {
-      const cb = maybeCB
-      filterRootMetafeed(visit, (err, metafeeds) => {
-        if (err) return cb(err)
-        cb(null, metafeeds[0])
-      })
+      cb(new Error('expected metafeed argument'))
     } else if (typeof metafeed === 'function') {
-      const cb = metafeed
-      filterRootMetafeed(visit, (err, metafeeds) => {
-        if (err) return cb(err)
-        cb(null, metafeeds[0])
-      })
+      cb(new Error('expected metafeed argument and visit argument'))
     } else {
       const cb = maybeCB
       filter(metafeed, visit, (err, feeds) => {
@@ -83275,37 +83246,6 @@ exports.init = function (sbot, config) {
 
   function branchStream(opts) {
     return sbot.metafeeds.lookup.branchStream(opts)
-  }
-
-  function filterTombstoned(metafeed, maybeVisit, cb) {
-    if (!metafeed || typeof metafeed === 'function') {
-      cb(new Error('filterTombstoned() requires a valid metafeed argument'))
-    } else {
-      const visit = maybeVisit || alwaysTrue
-      sbot.metafeeds.query.hydrate(
-        metafeed.keys.id,
-        metafeed.seed,
-        (err, hydrated) => {
-          if (err) return cb(err)
-          if (visit === alwaysTrue) return cb(null, hydrated.tombstoned)
-          const filtered = hydrated.tombstoned.filter((feed) => visit(feed))
-          cb(null, filtered)
-        }
-      )
-    }
-  }
-
-  function findTombstoned(metafeed, maybeVisit, cb) {
-    if (!metafeed || typeof metafeed === 'function') {
-      cb(new Error('findTombstoned() requires a valid metafeed argument'))
-    } else {
-      filterTombstoned(metafeed, maybeVisit, (err, tombstoned) => {
-        if (err) return cb(err)
-        if (tombstoned.length === 0) return cb(null, null)
-        const found = tombstoned[0]
-        cb(null, found)
-      })
-    }
   }
 
   function create(metafeed, details, maybeCB) {
@@ -83353,7 +83293,8 @@ exports.init = function (sbot, config) {
       getOrCreateRootMetafeed(cb)
     } else {
       const cb = maybeCB
-      find(metafeed, maybeVisit, (err, found) => {
+      const visit = maybeVisit || alwaysTrue
+      find(metafeed, visit, (err, found) => {
         if (err) return cb(err)
         if (found) return cb(null, found)
         create(metafeed, details, cb)
@@ -83361,18 +83302,66 @@ exports.init = function (sbot, config) {
     }
   }
 
+  function findAndTombstone(metafeed, visit, reason, cb) {
+    const { getLatest } = sbot.metafeeds.query
+    const { getMsgValTombstone } = sbot.metafeeds.messages
+
+    find(metafeed, visit, (err, found) => {
+      if (err) return cb(err)
+      if (!found) return cb(new Error('Cannot find subfeed to tombstone'))
+
+      getLatest(metafeed.keys.id, (err, latest) => {
+        if (err) return cb(err)
+
+        getMsgValTombstone(
+          metafeed.keys,
+          latest,
+          found.keys,
+          reason,
+          (err, msgVal) => {
+            if (err) return cb(err)
+
+            sbot.db.add(msgVal, (err, msg) => {
+              if (err) return cb(err)
+
+              cb(null, true)
+            })
+          }
+        )
+      })
+    })
+  }
+
   // lock to solve concurrent getOrCreateRootMetafeed
   const rootMetaFeedLock = {
     _cbs: [],
+    _cachedMF: null,
     acquire(cb) {
+      if (this._cachedMF) {
+        cb(null, this._cachedMF)
+        return false
+      }
       this._cbs.push(cb)
       return this._cbs.length === 1
     },
     release(err, mf) {
+      this._cachedMF = mf
       const cbs = this._cbs
       this._cbs = []
       for (const cb of cbs) cb(err, mf)
     },
+  }
+
+  function getRoot(cb) {
+    sbot.metafeeds.query.getSeed((err, seed) => {
+      if (err) return cb(err)
+      if (!seed) return cb(null, null)
+      const metafeed = {
+        seed,
+        keys: sbot.metafeeds.keys.deriveRootMetaFeedKeyFromSeed(seed),
+      }
+      cb(null, metafeed)
+    })
   }
 
   async function getOrCreateRootMetafeed(cb) {
@@ -83433,17 +83422,14 @@ exports.init = function (sbot, config) {
   }
 
   return {
-    filter,
-    find,
+    getRoot,
+    findOrCreate,
+    findAndTombstone,
     findById,
     findByIdSync,
     loadState,
     ensureLoaded,
-    create,
-    findOrCreate,
     branchStream,
-    filterTombstoned,
-    findTombstoned,
   }
 }
 
@@ -83538,26 +83524,30 @@ exports.init = function (sbot, config) {
     }
   }
 
-  function msgToDetails(msg) {
+  function msgToDetails(prevDetails, msg) {
     const content = msg.value.content
-    const details = {}
+    const details = { ...prevDetails }
     details.feedformat = detectFeedFormat(content.subfeed)
-    details.feedpurpose = content.feedpurpose
-    details.metafeed = content.metafeed
-    const metadata = {}
+    details.feedpurpose = content.feedpurpose || details.feedpurpose
+    details.metafeed = content.metafeed || details.metafeed
+    details.metadata = {} || details.metafeed
     const NOT_METADATA = [
       'metafeed',
       'feedpurpose',
       'type',
       'tangles',
+      'reason',
       'subfeed',
       'nonce',
     ]
     const keys = Object.keys(content).filter((k) => !NOT_METADATA.includes(k))
     for (const key of keys) {
-      metadata[key] = content[key]
+      details.metadata[key] = content[key]
     }
-    details.metadata = metadata
+    if (content.type === 'metafeed/tombstone') {
+      details.tombstoned = true
+      details.reason = content.reason
+    }
     return details
   }
 
@@ -83571,18 +83561,11 @@ exports.init = function (sbot, config) {
     }
 
     // Update children
-    if (childrenLookup.has(metafeed)) {
-      const subfeeds = childrenLookup.get(metafeed)
-      if (type.startsWith('metafeed/add/')) {
+    if (type.startsWith('metafeed/add/')) {
+      if (childrenLookup.has(metafeed)) {
+        const subfeeds = childrenLookup.get(metafeed)
         subfeeds.add(subfeed)
-      } else if (type === 'metafeed/tombstone') {
-        subfeeds.delete(subfeed)
-        if (subfeeds.size === 0) {
-          childrenLookup.delete(metafeed)
-        }
-      }
-    } else {
-      if (type.startsWith('metafeed/add/')) {
+      } else {
         const subfeeds = new Set()
         subfeeds.add(subfeed)
         childrenLookup.set(metafeed, subfeeds)
@@ -83590,15 +83573,10 @@ exports.init = function (sbot, config) {
     }
 
     // Update details
-    if (type.startsWith('metafeed/add/')) {
-      detailsLookup.set(subfeed, msgToDetails(msg))
-      roots.delete(subfeed)
-      ensureQueue.flush(subfeed)
-    } else if (type === 'metafeed/tombstone') {
-      detailsLookup.delete(subfeed)
-      roots.delete(subfeed)
-      ensureQueue.flush(subfeed)
-    }
+    const details = msgToDetails(detailsLookup.get(subfeed), msg)
+    detailsLookup.set(subfeed, details)
+    roots.delete(subfeed)
+    ensureQueue.flush(subfeed)
 
     if (notifyNewBranch) notifyNewBranch(makeBranch(subfeed))
   }
@@ -83717,7 +83695,7 @@ exports.init = function (sbot, config) {
             return cb(null, null)
           }
 
-          const details = msgToDetails(msgs[0])
+          const details = msgToDetails(undefined, msgs[0])
           cb(null, details)
         })
       )
@@ -83725,20 +83703,44 @@ exports.init = function (sbot, config) {
 
     branchStream(opts) {
       if (!loadStateRequested) loadState()
-      const { live = true, old = false, root = null } = opts || {}
-      const filterFn = root
+      const {
+        live = true,
+        old = false,
+        root = null,
+        tombstoned = false,
+      } = opts || {}
+
+      const filterRootFn = root
         ? (branch) => branch.length > 0 && branch[0][0] === root
         : () => true
+
+      const filterTombstoneOrNot = (branch) => {
+        if (branch.length === 1) return !tombstoned && branch[0][1] === null
+        else {
+          return branch.every(
+            ([, details]) => !details || !!details.tombstoned === tombstoned
+          )
+        }
+      }
 
       if (old && live) {
         return pull(
           cat([branchStreamOld(), notifyNewBranch.listen()]),
-          pull.filter(filterFn)
+          pull.filter(filterRootFn),
+          pull.filter(filterTombstoneOrNot)
         )
       } else if (live) {
-        return pull(notifyNewBranch.listen(), pull.filter(filterFn))
+        return pull(
+          notifyNewBranch.listen(),
+          pull.filter(filterRootFn),
+          pull.filter(filterTombstoneOrNot)
+        )
       } else if (old) {
-        return pull(branchStreamOld(), pull.filter(filterFn))
+        return pull(
+          branchStreamOld(),
+          pull.filter(filterRootFn),
+          pull.filter(filterTombstoneOrNot)
+        )
       } else {
         return pull.empty()
       }
@@ -84194,6 +84196,8 @@ exports.init = function (sbot, config) {
             feedformat
           )
       return {
+        metafeed: msg.value.author,
+        feedformat,
         feedpurpose,
         subfeed,
         keys,
