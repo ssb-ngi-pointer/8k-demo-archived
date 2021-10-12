@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 Anders Rune Jensen <arj03@protonmail.ch>
+
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # 8K demo
 
 8K demo is an example SSB application made for the svendsolar event

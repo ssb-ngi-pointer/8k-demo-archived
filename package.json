@@ -15,6 +15,12 @@
     "Andre Alves Garzia"
   ],
   "license": "LGPL-3.0"
+  "files": [
+    "package.json.license",
+    "LICENSES/*",
+    "*.js",
+    "apps/*.js"
+  ],
   "dependencies": {
     "ssb-browser-core": "^11.3.0",
     "ssb-meta-feeds": "^0.24.0",

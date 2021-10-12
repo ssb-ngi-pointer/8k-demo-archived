@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen <arj03@protonmail.ch>
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const ssbSingleton = require('ssb-browser-core/ssb-singleton')
 const pull = require('pull-stream')
 const source = require('./source')

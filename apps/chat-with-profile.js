@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen <arj03@protonmail.ch>
+//
+// SPDX-License-Identifier: CC0-1.0
+
 let chatFeed
 
 function getChatFeed(SSB) {

@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+#
+# SPDX-License-Identifier: Unlicense
+
+dist
+node_modules
+package-lock.json
+*~
