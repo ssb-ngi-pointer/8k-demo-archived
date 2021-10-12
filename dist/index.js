@@ -30284,7 +30284,7 @@ module.exports.create = module.exports.custom.createError
 
 var GetIntrinsic = require('get-intrinsic');
 
-var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%');
+var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%', true);
 if ($gOPD) {
 	try {
 		$gOPD([], 'length');
@@ -78459,6 +78459,10 @@ function interpoolGlue(db, hub, staging) {
 exports.interpoolGlue = interpoolGlue;
 
 },{"pull-ping":513,"pull-stream":517,"statistics":813}],735:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const pull = require('pull-stream')
 
 // exports.name is blank to merge into global namespace
@@ -78498,6 +78502,10 @@ exports.init = function (sbot, config) {
 }
 
 },{"pull-stream":517}],736:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const pull = require('pull-stream')
 const EBTIndex = require('../indexes/ebt')
 const { onceWhen } = require('../utils')
@@ -78537,6 +78545,10 @@ exports.init = function (sbot, config) {
 }
 
 },{"../indexes/ebt":744,"../utils":753,"pull-stream":517}],737:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const pull = require('pull-stream')
 const pullCont = require('pull-cont')
 const ref = require('ssb-ref')
@@ -78613,6 +78625,10 @@ exports.init = function (sbot, config) {
 }
 
 },{"../indexes/private":747,"../operators":750,"hoox":236,"pull-cont":457,"pull-stream":517,"ssb-ref":795}],738:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 module.exports = [
   require('./db'),
   require('./ebt'),
@@ -78621,6 +78637,10 @@ module.exports = [
 ]
 
 },{"./db":735,"./ebt":736,"./history-stream":737,"./log-stream":739}],739:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const pull = require('pull-stream')
 const cat = require('pull-cat')
 const { descending, live, toPullStream } = require('../operators')
@@ -78671,6 +78691,10 @@ exports.init = function (sbot) {
 }
 
 },{"../operators":750,"pull-cat":455,"pull-stream":517}],740:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const push = require('push-stream')
 const ssbKeys = require('ssb-keys')
 const validate = require('ssb-validate') // TODO: remove this eventually
@@ -78994,7 +79018,12 @@ exports.init = function (sbot, config) {
         if (Ref.isFeedId(msgVal.author)) {
           const previous = (state[msgVal.author] || { value: null }).value
           validate2.validateSingle(hmacKey, msgVal, previous, (err, key) => {
-            if (err) return cb(err)
+            if (err) {
+              debug(
+                `validation failed for classic message in addImmediately(): ${err.message}`
+              )
+              return cb(err)
+            }
             updateState({ key, value: msgVal })
             log.add(key, msgVal, (err, kvt) => {
               if (err) return cb(err)
@@ -79006,7 +79035,12 @@ exports.init = function (sbot, config) {
         } else if (SSBURI.isBendyButtV1FeedSSBURI(msgVal.author)) {
           const previous = (state[msgVal.author] || { value: null }).value
           const err = bendyButt.validateSingle(msgVal, previous, hmacKey)
-          if (err) return cb(err)
+          if (err) {
+            debug(
+              `validation failed for bendy butt message in addImmediately(): ${err.message}`
+            )
+            return cb(err)
+          }
           const key = bendyButt.hash(msgVal)
           updateState({ key, value: msgVal })
           log.add(key, msgVal, (err, kvt) => {
@@ -79287,6 +79321,10 @@ exports.init = function (sbot, config) {
 }
 
 },{"./debounce-batch":741,"./defaults":742,"./indexes/base":743,"./indexes/keys":745,"./indexes/private":747,"./log":748,"./operators":750,"./status":752,"./utils":753,"bipf":54,"debug":124,"jitdb":269,"jitdb/operators":270,"multicb":351,"obz":400,"promisify-4loc":435,"pull-paramap":511,"pull-stream":517,"push-stream":567,"ssb-bendy-butt":699,"ssb-keys":780,"ssb-ref":795,"ssb-uri2":806,"ssb-validate":807,"ssb-validate2":809,"ssb-validate2-rsjs-node":808}],741:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 module.exports = class DebouncingBatchAdd {
   constructor(addBatch, period) {
     this.addBatch = addBatch
@@ -79348,7 +79386,7 @@ module.exports = class DebouncingBatchAdd {
     }, this.period * 0.5)
   }
 
-  add = (msgVal, cb) => {
+  add(msgVal, cb) {
     const authorId = msgVal.author
     const queue = this.queueByAuthor.get(authorId) || []
     queue.push([msgVal, cb])
@@ -79359,6 +79397,10 @@ module.exports = class DebouncingBatchAdd {
 }
 
 },{}],742:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const path = require('path')
 
 exports.BLOCK_SIZE = 64 * 1024
@@ -79377,6 +79419,10 @@ exports.tooHotOpts = (config) =>
 
 },{"path":422}],743:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const bipf = require('bipf')
 const pl = require('pull-level')
 const pull = require('pull-stream')
@@ -79466,6 +79512,10 @@ module.exports = function makeBaseIndex(privateIndex) {
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"./plugin":746,"bipf":54,"buffer":105,"pull-level":501,"pull-stream":517}],744:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const bipf = require('bipf')
 const Plugin = require('./plugin')
 const { reEncrypt } = require('./private')
@@ -79516,6 +79566,10 @@ module.exports = class EBT extends Plugin {
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"./plugin":746,"./private":747,"bipf":54,"buffer":105}],745:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const bipf = require('bipf')
 const Plugin = require('./plugin')
 const { seqs } = require('../operators')
@@ -79556,6 +79610,10 @@ module.exports = class Keys extends Plugin {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"../operators":750,"./plugin":746,"bipf":54,"buffer":105}],746:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const Obv = require('obz')
 const Level = require('level')
 const debounce = require('lodash.debounce')
@@ -79597,6 +79655,9 @@ module.exports = class Plugin {
       if (processedOffset < 0 || this.level.isClosed()) return cb()
       if (!this.onFlush) this.onFlush = (cb2) => cb2()
 
+      const processedOffsetAtFlush = processedOffset
+      const processedSeqAtFlush = processedSeq
+
       this.onFlush((err) => {
         if (err) return cb(err)
 
@@ -79611,12 +79672,12 @@ module.exports = class Plugin {
             // 2nd, persist the META because it has its own valueEncoding
             this.level.put(
               META,
-              { version, offset: processedOffset, processed: processedSeq },
+              { version, offset: processedOffsetAtFlush, processed: processedSeqAtFlush },
               { valueEncoding: 'json' },
               (err3) => {
                 if (err3) cb(err3)
                 else {
-                  this.offset.set(processedOffset)
+                  this.offset.set(processedOffsetAtFlush)
                   cb()
                 }
               }
@@ -79699,6 +79760,10 @@ module.exports = class Plugin {
 
 },{"../defaults":742,"debug":124,"level":321,"level-codec/lib/encodings":293,"lodash.debounce":328,"mkdirp":341,"obz":400,"p-defer":405,"path":422}],747:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const Obv = require('obz')
 const bipf = require('bipf')
 const fic = require('fastintcompression')
@@ -79870,6 +79935,10 @@ module.exports.reEncrypt = function (msg) {
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"../defaults":742,"atomic-file-rw":41,"binary-search-bounds":53,"bipf":54,"buffer":105,"debug":124,"fastintcompression":181,"obz":400,"p-defer":405,"path":422,"ssb-keys":780,"typedarray-to-buffer":864}],748:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const OffsetLog = require('async-append-only-log')
 const bipf = require('bipf')
 const TooHot = require('too-hot')
@@ -79974,6 +80043,10 @@ module.exports = function (dir, config, privateIndex) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"./defaults":742,"async-append-only-log":36,"bipf":54,"buffer":105,"too-hot":858}],749:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const { deferred } = require('jitdb/operators')
 
 module.exports = function mentions(key) {
@@ -79986,6 +80059,10 @@ module.exports = function mentions(key) {
 
 },{"jitdb/operators":270}],750:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const SSBURI = require('ssb-uri2')
 const jitdbOperators = require('jitdb/operators')
 const {
@@ -80172,6 +80249,10 @@ module.exports = Object.assign({}, jitdbOperators, {
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"../seekers":751,"buffer":105,"jitdb/operators":270,"ssb-uri2":806}],751:[function(require,module,exports){
 (function (Buffer){(function (){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const { seekKey } = require('bipf')
 
 const B_KEY = Buffer.from('key')
@@ -80307,6 +80388,10 @@ module.exports = {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"bipf":54,"buffer":105}],752:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const Obv = require('obz')
 
 module.exports = function Status(log, jitdb) {
@@ -80376,6 +80461,10 @@ module.exports = function Status(log, jitdb) {
 }
 
 },{"obz":400}],753:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Anders Rune Jensen
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /**
  * Obv utility to run the `cb` once, as soon as the condition given by
  * `filter` is true.
@@ -81943,10 +82032,7 @@ exports.init = function (sbot, config) {
 
   function getEBT(formatName) {
     const ebt = ebts.find((ebt) => ebt.name === formatName)
-    if (!ebt) {
-      console.log(ebts)
-      throw new Error('Unknown format: ' + formatName)
-    }
+    if (!ebt) throw new Error('Unknown format: ' + formatName)
 
     return ebt
   }
@@ -81986,7 +82072,9 @@ exports.init = function (sbot, config) {
       ebts.forEach((ebt) => {
         if (ebt.isFeed(msg.value.author)) {
           ebt.convertMsg(msg.value, (err, converted) => {
-            ebt.onAppend(converted)
+            if (err)
+              console.warn('Failed to convert msg in ssb-ebt because:', err)
+            else ebt.onAppend(converted)
           })
         }
       })
@@ -84484,6 +84572,10 @@ exports.validateMetafeedAnnounce = validateMetafeedAnnounce
 
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"bencode":51,"buffer":105,"is-canonical-base64":257,"ssb-bfe":701,"ssb-keys":780,"ssb-ref":795,"ssb-uri2":806}],793:[function(require,module,exports){
+// SPDX-FileCopyrightText: 2021 Andre Staltz
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 const BENIGN_STREAM_END = {
   // stream closed okay, ssb-js variant
   'unexpected end of parent stream': true,
