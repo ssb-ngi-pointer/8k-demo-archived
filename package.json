@@ -10,8 +10,11 @@
     "type": "git",
     "url": "git+https://github.com/ssb-ngi-pointer/8k-demo.git"
   },
-  "author": "arj",
-  "license": "Beerware",
+  "author": "Anders Rune Jensen <arj03@protonmail.ch>",
+  "contributors": [
+    "Andre Alves Garzia"
+  ],
+  "license": "LGPL-3.0"
   "dependencies": {
     "ssb-browser-core": "^11.3.0",
     "ssb-meta-feeds": "^0.24.0",
