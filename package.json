@@ -13,7 +13,7 @@
   "author": "arj",
   "license": "Beerware",
   "dependencies": {
-    "ssb-browser-core": "github:arj03/ssb-browser-core#bendy-butt",
+    "ssb-browser-core": "^11.3.0",
     "ssb-meta-feeds": "^0.24.0",
     "vue": "^2.6.14"
   },
