@@ -14,7 +14,7 @@
   "contributors": [
     "Andre Alves Garzia"
   ],
-  "license": "LGPL-3.0"
+  "license": "LGPL-3.0",
   "files": [
     "package.json.license",
     "LICENSES/*",
