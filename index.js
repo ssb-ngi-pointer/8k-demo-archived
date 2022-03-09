@@ -35,10 +35,7 @@ let config = {
 // setup ssb browser core
 ssbSingleton.setup("/.ssb-8k", config, extraModules, () => {})
 
-ssbSingleton.getSSBEventually(
-  -1,
-  () => { return true },
-  (SSB) => { return SSB && SSB.net },
+ssbSingleton.getSimpleSSBEventually(
   (err, SSB) => {
     if (err) console.error(err)
     else ssbReady(SSB)
@@ -72,7 +69,7 @@ const app = new Vue({
 })
 
 function dumpDB() {
-  const { toPullStream } = SSB.dbOperators
+  const { toPullStream } = SSB.db.operators
 
   pull(
     SSB.db.query(
@@ -94,12 +91,12 @@ function ssbReady(SSB) {
   //console.log("got sbot", SSB)
   //dumpDB()
 
-  app.id = SSB.net.id
+  app.id = SSB.id
 
-  SSB.net.ebt.registerFormat(require('ssb-ebt/formats/bendy-butt'))
+  SSB.ebt.registerFormat(require('ssb-ebt/formats/bendy-butt'))
 
   const { where, type, author, slowEqual, live,
-          toPullStream, toCallback } = SSB.dbOperators
+          toPullStream, toCallback } = SSB.db.operators
 
   // load default app
   const chatApp = require('./chat')
@@ -132,16 +129,16 @@ function ssbReady(SSB) {
     })
   )
 
-  const roomKey = '@oPnjHuBpFNG+wXC1dzmdzvOO30mVNYmZB778fq3bn3Y=.ed25519'
-  const room = 'wss:between-two-worlds.dk:444~shs:oPnjHuBpFNG+wXC1dzmdzvOO30mVNYmZB778fq3bn3Y='
+  const roomKey = '@Px7ZxMT4mtpqiNH+PHyao9+o0RdQ/nzU5qznf7WMNIE=.ed25519'
+  const room = 'wss:between-two-worlds.dk:443~shs:Px7ZxMT4mtpqiNH+PHyao9+o0RdQ/nzU5qznf7WMNIE='
 
-  SSB.net.connectAndRemember(room, {
+  SSB.conn.connect(room, {
     key: roomKey,
     type: 'room'
-  })
+  }, () => {})
 
   pull(
-    SSB.net.conn.hub().listen(),
+    SSB.conn.hub().listen(),
     pull.drain((ev) => {
       if (ev.type.indexOf("failed") >= 0)
         console.warn("Connection error: ", ev)
@@ -153,7 +150,7 @@ function ssbReady(SSB) {
 
   // promiscous mode, we connect to all and replicate all
   pull(
-    SSB.net.conn.stagedPeers(),
+    SSB.conn.stagedPeers(),
     pull.drain((entries) => {
       if (app.peers.length + delayedConnections >= maxConnections)
         return
@@ -168,19 +165,19 @@ function ssbReady(SSB) {
         // delayed connect to handle concurrency
         setTimeout(() => {
           delayedConnections -= 1
-          if (SSB.net.conn.query().peersConnected().some(p => p[0] === addr)) {
+          if (SSB.conn.query().peersConnected().some(p => p[0] === addr)) {
             //console.log("already connected, skipping")
             return
           }
 
-          SSB.net.conn.connect(addr, data)
+          SSB.conn.connect(addr, data)
         }, delay)
       }
     })
   )
 
   pull(
-    SSB.net.conn.peers(),
+    SSB.conn.peers(),
     pull.drain((entries) => {
       app.peers = entries.filter(([, x]) => !!x.key).map(([address, data]) => ({ address, data }))
     })
@@ -188,7 +185,7 @@ function ssbReady(SSB) {
 
   setInterval(() => {
     if (app.peers.length === 0) {
-      SSB.net.conn.connect(room, {
+      SSB.conn.connect(room, {
         key: roomKey,
         type: 'room'
       })
@@ -196,13 +193,13 @@ function ssbReady(SSB) {
   }, 1000)
 
   // must ack self
-  SSB.net.ebt.request(SSB.net.id, true)
+  SSB.ebt.request(SSB.id, true)
 
   // main feed replicated on rpc connect
-  SSB.net.on('rpc:connect', function (rpc, isClient) {
+  SSB.on('rpc:connect', function (rpc, isClient) {
     if (rpc.id !== roomKey) {
       console.log("request connect", rpc.id)
-      SSB.net.ebt.request(rpc.id, true)
+      SSB.ebt.request(rpc.id, true)
     }
   })
 
@@ -217,7 +214,7 @@ function ssbReady(SSB) {
       const { metafeed } = msg.value.content
       console.log("replicating mf", metafeed)
       // similar to ack self, we must ack own feeds!
-      SSB.net.ebt.request(metafeed, true)
+      SSB.ebt.request(metafeed, true)
 
       pull(
         SSB.db.query(
@@ -231,7 +228,7 @@ function ssbReady(SSB) {
           if (feedpurpose !== 'main') { // special
             console.log("replicating subfeed", subfeed)
             // similar to ack self, we must ack own feeds!
-            SSB.net.ebt.request(subfeed, true)
+            SSB.ebt.request(subfeed, true)
           }
         })
       )
@@ -249,19 +246,19 @@ function ssbReady(SSB) {
     pull.drain((msg) => {
       const { feed } = msg.value.content
       console.log("replicating non-direct", feed)
-      SSB.net.ebt.request(feed, true)
+      SSB.ebt.request(feed, true)
     })
   )
 
   // maintain a list of main feeds we have seen (friends-lite)
 
-  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+  SSB.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: 'replication',
       feedformat: 'classic',
     }
 
-    SSB.net.metafeeds.findOrCreate(
+    SSB.metafeeds.findOrCreate(
       metafeed,
       (f) => f.feedpurpose === details.feedpurpose,
       details,

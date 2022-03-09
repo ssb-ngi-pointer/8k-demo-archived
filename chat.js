@@ -8,13 +8,13 @@ module.exports = function (pull, ssbSingleton) {
   function getChatFeed(SSB, cb) {
     if (chatFeed !== null) return cb(null, chatFeed)
 
-    SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+    SSB.metafeeds.findOrCreate((err, metafeed) => {
       const details = {
         feedpurpose: '8K/chat',
         feedformat: 'classic',
       }
 
-      SSB.net.metafeeds.findOrCreate(
+      SSB.metafeeds.findOrCreate(
         metafeed,
         (f) => f.feedpurpose === details.feedpurpose,
         details,
@@ -53,7 +53,6 @@ module.exports = function (pull, ssbSingleton) {
         if (this.message === '') return
 
         ssbSingleton.getSimpleSSBEventually(
-          () => this.componentStillLoaded,
           (err, SSB) => {
             getChatFeed(SSB, (err, chatFeed) => {
               SSB.db.publishAs(chatFeed.keys, {
@@ -70,13 +69,12 @@ module.exports = function (pull, ssbSingleton) {
       
       load: function() {
         ssbSingleton.getSimpleSSBEventually(
-          () => this.componentStillLoaded,
           this.render
         )
       },
 
       render: function(err, SSB) {
-        const { where, type, live, toPullStream } = SSB.dbOperators
+        const { where, type, live, toPullStream } = SSB.db.operators
 
         pull(
           SSB.db.query(

@@ -11,6 +11,8 @@ running purely in the browser using [ssb-browser-core]. The aim of the
 application is to showcase some of the things we have been building
 during the ngi pointer grant.
 
+You can try a [live demo].
+
 ![Screenshot of 8K demo][screenshot]
 
 8K demo works by allowing users to create their own applications and
@@ -39,3 +41,4 @@ inspiration.
 [screenshot]: screenshot.png
 [ssb-browser-core]: https://github.com/arj03/ssb-browser-core
 [room]: https://github.com/ssb-ngi-pointer/go-ssb-room/
+[live demo]: https://8kdemo.between-two-worlds.dk/

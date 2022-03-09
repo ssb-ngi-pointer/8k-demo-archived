@@ -22,8 +22,8 @@
     "apps/*.js"
   ],
   "dependencies": {
-    "ssb-browser-core": "^11.3.0",
-    "ssb-meta-feeds": "^0.24.0",
+    "ssb-browser-core": "^13.0.7",
+    "ssb-meta-feeds": "^0.28.1",
     "vue": "^2.6.14"
   },
   "devDependencies": {
