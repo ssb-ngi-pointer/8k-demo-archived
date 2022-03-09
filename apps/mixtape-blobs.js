@@ -7,13 +7,13 @@ let feed = null
 function getFeed(SSB, cb) {
   if (feed !== null) return cb(null, feed)
 
-  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+  SSB.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/mixtape',
       feedformat: 'classic',
     }
 
-    SSB.net.metafeeds.findOrCreate(
+    SSB.metafeeds.findOrCreate(
       metafeed,
       (f) => f.feedpurpose === details.feedpurpose,
       details,
@@ -98,7 +98,7 @@ return {
       if (!file) return
 
       [ err, SSB ] = ssbSingleton.getSSB()
-      if (!SSB || !SSB.net || !SSB.net.blobs) {
+      if (!SSB || !SSB.blobs) {
         alert("Can't add file right now.")
         return
       }
@@ -106,12 +106,12 @@ return {
       self = this
 
       file.arrayBuffer().then(function (buffer) {
-        SSB.net.blobs.hash(new Uint8Array(buffer), (err, digest) => {
+        SSB.blobs.hash(new Uint8Array(buffer), (err, digest) => {
           var blobId = "&" + digest
-          SSB.net.blobs.add(blobId, file, (err) => {
+          SSB.blobs.add(blobId, file, (err) => {
             if (!err) {
-              SSB.net.blobs.push(blobId, (err) => {
-                SSB.net.blobs.localGet(blobId, (err, url) => {
+              SSB.blobs.push(blobId, (err) => {
+                SSB.blobs.localGet(blobId, (err, url) => {
                   if (!err) {
                     self.cover = url
                     self.coverBlob = blobId
@@ -131,18 +131,18 @@ return {
       if (!file) return
 
       [ err, SSB ] = ssbSingleton.getSSB()
-      if (!SSB || !SSB.net || !SSB.net.blobs) {
+      if (!SSB || !SSB.blobs) {
         alert("Can't add file right now.")
         return
       }
 
       file.arrayBuffer().then(function (buffer) {
-        SSB.net.blobs.hash(new Uint8Array(buffer), (err, digest) => {
+        SSB.blobs.hash(new Uint8Array(buffer), (err, digest) => {
           var blobId = "&" + digest
-          SSB.net.blobs.add(blobId, file, (err) => {
+          SSB.blobs.add(blobId, file, (err) => {
             if (!err) {
-              SSB.net.blobs.push(blobId, (err) => {
-                SSB.net.blobs.localGet(blobId, (err, url) => {
+              SSB.blobs.push(blobId, (err) => {
+                SSB.blobs.localGet(blobId, (err, url) => {
                   if (!err) {
                     song.url = url
                     song.blob = blobId
@@ -166,7 +166,6 @@ return {
       if (this.url === '') return
 
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         (err, SSB) => {
           getFeed(SSB, (err, feed) => {
             SSB.db.publishAs(feed.keys, {
@@ -192,13 +191,12 @@ return {
     
     load: function() {
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         this.render
       )
     },
 
     render: function(err, SSB) {
-      const { where, type, live, toPullStream } = SSB.dbOperators
+      const { where, type, live, toPullStream } = SSB.db.operators
 
       pull(
         SSB.db.query(
@@ -220,10 +218,10 @@ return {
           }
           this.mixtapes.push(mixtape)
 
-          const peers = SSB.net.conn.query().peersConnected()
+          const peers = SSB.conn.query().peersConnected()
 
           if (coverBlob) {
-            SSB.net.blobs.getBlob(coverBlob, peers, (err, url) => {
+            SSB.blobs.getBlob(coverBlob, peers, (err, url) => {
               console.log(err)
               mixtape.cover = url
             })
@@ -231,7 +229,7 @@ return {
 
           for (let song of songs) {
             if (song.blob) {
-              SSB.net.blobs.getBlob(song.blob, peers, (err, url) => {
+              SSB.blobs.getBlob(song.blob, peers, (err, url) => {
                 song.url = url
               })
             }

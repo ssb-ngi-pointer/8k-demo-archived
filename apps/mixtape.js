@@ -7,13 +7,13 @@ let feed = null
 function getFeed(SSB, cb) {
   if (feed !== null) return cb(null, feed)
 
-  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+  SSB.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/mixtape',
       feedformat: 'classic',
     }
 
-    SSB.net.metafeeds.findOrCreate(
+    SSB.metafeeds.findOrCreate(
       metafeed,
       (f) => f.feedpurpose === details.feedpurpose,
       details,
@@ -101,7 +101,6 @@ return {
       if (this.url === '') return
 
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         (err, SSB) => {
           getFeed(SSB, (err, feed) => {
             SSB.db.publishAs(feed.keys, {
@@ -127,13 +126,12 @@ return {
     
     load: function() {
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         this.render
       )
     },
 
     render: function(err, SSB) {
-      const { where, type, descending, live, toPullStream } = SSB.dbOperators
+      const { where, type, descending, live, toPullStream } = SSB.db.operators
 
       pull(
         SSB.db.query(

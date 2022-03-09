@@ -40,15 +40,14 @@ module.exports = function () {
 
       create: function() {
         ssbSingleton.getSimpleSSBEventually(
-          () => true,
           (err, SSB) => {
-            SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+            SSB.metafeeds.findOrCreate((err, metafeed) => {
               const details = {
                 feedpurpose: '8K/applications',
                 feedformat: 'classic',
               }
 
-              SSB.net.metafeeds.findOrCreate(
+              SSB.metafeeds.findOrCreate(
                 metafeed,
                 (f) => f.feedpurpose === details.feedpurpose,
                 details,

@@ -5,13 +5,13 @@
 let chatFeed
 
 function getChatFeed(SSB) {
-  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+  SSB.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/chat',
       feedformat: 'classic'
     }
 
-    SSB.net.metafeeds.findOrCreate(
+    SSB.metafeeds.findOrCreate(
       metafeed,
       (f) => f.feedpurpose === details.feedpurpose,
       details,
@@ -57,7 +57,6 @@ return {
     
     load: function() {
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         this.render
       )
     },
@@ -66,7 +65,7 @@ return {
       getChatFeed(SSB)
 
       const { where, or, type, descending, live,
-              toPullStream, toPromise, toCallback } = SSB.dbOperators
+              toPullStream, toPromise, toCallback } = SSB.db.operators
 
       const profiles = await SSB.db.query(
         where(
@@ -131,8 +130,8 @@ return {
 
             if (profile && profile.value.content.image) {
               console.log("getting img", profile.value.content.image)
-              const peers = SSB.net.conn.query().peersConnected()
-              SSB.net.blobs.getBlob(profile.value.content.image, peers, (err, url) => {
+              const peers = SSB.conn.query().peersConnected()
+              SSB.blobs.getBlob(profile.value.content.image, peers, (err, url) => {
                 console.log("setting img", url)
                 chatMessage.img = url
               })

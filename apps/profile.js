@@ -7,13 +7,13 @@ let profileFeed = null
 function getProfileFeed(SSB, cb) {
   if (profileFeed !== null) return cb(null, profileFeed)
 
-  SSB.net.metafeeds.findOrCreate((err, metafeed) => {
+  SSB.metafeeds.findOrCreate((err, metafeed) => {
     const details = {
       feedpurpose: '8K/profile',
       feedformat: 'classic'
     }
 
-    SSB.net.metafeeds.findOrCreate(
+    SSB.metafeeds.findOrCreate(
       metafeed,
       (f) => f.feedpurpose === details.feedpurpose,
       details,
@@ -54,18 +54,18 @@ return {
 
       var self = this;
       [ err, SSB ] = ssbSingleton.getSSB()
-      if (!SSB || !SSB.net || !SSB.net.blobs) {
+      if (!SSB || !SSB.blobs) {
         alert("Can't add file right now.")
         return
       }
 
       file.arrayBuffer().then(function (buffer) {
-        SSB.net.blobs.hash(new Uint8Array(buffer), (err, digest) => {
+        SSB.blobs.hash(new Uint8Array(buffer), (err, digest) => {
           var blobId = "&" + digest
-          SSB.net.blobs.add(blobId, file, (err) => {
+          SSB.blobs.add(blobId, file, (err) => {
             if (!err) {
-              SSB.net.blobs.push(blobId, (err) => {
-                SSB.net.blobs.localGet(blobId, (err, url) => {
+              SSB.blobs.push(blobId, (err) => {
+                SSB.blobs.localGet(blobId, (err, url) => {
                   if (!err) {
                     self.imageURL = url
                     self.image = blobId
@@ -83,7 +83,6 @@ return {
       if (this.name === '') return
 
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         (err, SSB) => {
           getProfileFeed(SSB, (err, profileFeed) => {
             if (err) return console.error(err)
@@ -105,16 +104,14 @@ return {
     
     load: function() {
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         this.render
       )
     },
 
     render: function(err, SSB) {
-      const { where, and, type, author, toPullStream } = SSB.dbOperators
+      const { where, and, type, author, toPullStream } = SSB.db.operators
 
       ssbSingleton.getSimpleSSBEventually(
-        () => this.componentStillLoaded,
         (err, SSB) => {
           getProfileFeed(SSB, (err, profileFeed) => {
             pull(
@@ -126,7 +123,7 @@ return {
                 const { name, image } = msg.value.content
                 this.name = name
                 this.image = image
-                SSB.net.blobs.localGet(image, (err, url) => {
+                SSB.blobs.localGet(image, (err, url) => {
                   this.imageURL = url
                 })
               })
